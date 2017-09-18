@@ -14,4 +14,5 @@
     <string name="reset_quiz">Resetuj quiz</string>
     <string name="image_description">Obraz bieżącej flagi</string>
     <string name="default_region">North_America</string>
+    <string name="title_activity_settings">Ustawienia</string>
 </resources>
