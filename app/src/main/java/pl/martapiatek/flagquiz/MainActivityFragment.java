@@ -1,13 +1,17 @@
 package pl.martapiatek.flagquiz;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -17,8 +21,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -150,7 +156,107 @@ public void updateGuessRows(SharedPreferences sharedPreferences){
             }
         }
 
-      //  loadNextFlag(); //uruchom quiz ladujac pierwsza flage
+        loadNextFlag(); //uruchom quiz ladujac pierwsza flage
+
+    }
+
+    //zaladuj kolejna flage po udzieleniu poprawnej odpowiedzi
+    private void loadNextFlag() {
+
+        //ustal nazwe pliku kolejnej flagi i usun ja z listy
+        String nextImage = quizCountriesList.remove(0);
+        correctAnswer = nextImage;
+        answerTextView.setText("");
+
+        //wyswietl numer biezacego pytania
+        questionNumberTextView.setText(getString(R.string.question, (correctAnswers + 1), FLAGS_IN_QUIZ));
+
+        //odczytaj info o obszarze z nazwy kolejnego pliku
+        String region = nextImage.substring(0, nextImage.indexOf('-'));
+
+        AssetManager assets = getActivity().getAssets();
+
+        try {
+            InputStream stream = assets.open(region + "/" + nextImage + ".png");
+
+            Drawable flag = Drawable.createFromStream(stream, nextImage);
+            flagImageView.setImageDrawable(flag);
+
+             animate(false); //animuj flage wprowadzana na ekran
+
+        } catch (IOException exception) {
+            Log.e(TAG, "Błąd ładowania " + nextImage, exception);
+        }
+
+        Collections.shuffle(fileNameList); //pomieszaj nazwy plikow
+
+        //prawidlowa odpowiedz umiesc na koncu listy fileNameList
+        int correct = fileNameList.indexOf(correctAnswer);
+        fileNameList.add(fileNameList.remove(correct));
+
+
+        //dodaj 2,4,6 lub 8 przyciskow
+        for(int row = 0; row < guessRows; row++){
+
+            for(int column = 0; column < guessLinearLayouts[row].getChildCount(); column++){
+
+                Button newGuessButton = (Button) guessLinearLayouts[row].getChildAt(column);
+                newGuessButton.setEnabled(true);
+
+                //ustal nazwe kraju i przeksztalc ja na wyswietlany tekst
+                String filename = fileNameList.get((row*2) + column);
+                newGuessButton.setText(getCountryName(filename));
+
+            }
+        }
+
+        //zastap losowo wtbrany przycisk poprawna odpowiedzia
+        int row = random.nextInt(guessRows);
+        int column = random.nextInt(2);
+        LinearLayout randomRow = guessLinearLayouts[row];
+        String countryName = getCountryName(correctAnswer);
+        ((Button) randomRow.getChildAt(column)).setText(countryName);
+
+    }
+
+    //parsuje nazwe pliku flagi i zwraca nazwe  panstwa
+    private String getCountryName(String name){
+        return name.substring(name.indexOf('-') + 1).replace('_',' ');
+    }
+
+    //animacja
+    private void animate(boolean animateOut){
+
+        //nie wyswietlaj animacji podczas umieszczania pierwszej flagi
+        if(correctAnswers == 0)
+            return;
+
+        //oblicz wspolrzedne x i y srodka
+        int centerX = (quizLinearLayout.getLeft() + quizLinearLayout.getRight()) / 2;
+        int centerY = (quizLinearLayout.getTop() + quizLinearLayout.getBottom()) / 2;
+
+        //oblicz promien animacji
+        int radius = Math.max(quizLinearLayout.getWidth(), quizLinearLayout.getHeight());
+
+        Animator animator;
+
+        if(animateOut){
+
+            animator = ViewAnimationUtils.createCircularReveal(quizLinearLayout, centerX, centerY, radius, 0);
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                   loadNextFlag();
+                }
+            });
+
+        }
+        else {
+            animator = ViewAnimationUtils.createCircularReveal(quizLinearLayout, centerX, centerY, 0, radius);
+
+        }
+        animator.setDuration(500); // czas animacji w ms
+        animator.start();//uruchom animacje
 
     }
 
