@@ -103,14 +103,14 @@ public class MainActivity extends AppCompatActivity {
 
             if (key.equals(CHOICES)) {
                 //zmiana liczby wyswietlanych odpowiedzi
-                //  quizFragment.updateGuessRows(sharedPreferences);
+                  quizFragment.updateGuessRows(sharedPreferences);
                 //  quizFragment.resetQuiz();
             } else if (key.equals(REGIONS)) {
                 //zmniana obszarow, ktorych ma dotyczyc quiz
                 Set<String> regions = sharedPreferences.getStringSet(REGIONS, null);
 
                 if (regions != null && regions.size() > 0) {
-                    //   quizFragment.updateRegions(sharedPreferences);
+                       quizFragment.updateRegions(sharedPreferences);
                     //   quizFragment.resetQuiz();
 
                 } else {
