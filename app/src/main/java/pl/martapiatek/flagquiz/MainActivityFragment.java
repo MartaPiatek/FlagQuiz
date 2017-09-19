@@ -1,9 +1,11 @@
 package pl.martapiatek.flagquiz;
 
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,5 +111,48 @@ public void updateGuessRows(SharedPreferences sharedPreferences){
     public void updateRegions(SharedPreferences sharedPreferences){
         regionsSet = sharedPreferences.getStringSet(MainActivity.REGIONS, null);
     }
+
+    //przygotowuje i uruchamia kolejny quiz
+    public void resetQuiz(){
+        //AssetManager umożliwia uzyskanie nazw plików obrazow flag
+        AssetManager assets = getActivity().getAssets();
+        fileNameList.clear();
+
+        try{
+            for(String region : regionsSet){
+
+                //uzyskaj liste wszystkich plikow z flagami z danego obszaru
+                String[] paths = assets.list(region);
+
+                for(String path : paths)
+                    fileNameList.add(path.replace(".png", ""));
+            }
+        }catch (IOException exception){
+            Log.e(TAG, "Błąd ładowania plików obrazów", exception);
+        }
+
+        correctAnswers = 0;
+        totalGuesses = 0;
+        quizCountriesList.clear();
+
+        int flagCounter = 1;
+        int numberOfFlags = fileNameList.size();
+
+        //dodaj losowe nazwy plikow flag do quizu
+        while(flagCounter <= FLAGS_IN_QUIZ){
+            int randomIndex = random.nextInt(numberOfFlags);
+
+            String filename = fileNameList.get(randomIndex);
+
+            if(!quizCountriesList.contains(filename)){
+                quizCountriesList.add(filename);
+                ++flagCounter;
+            }
+        }
+
+      //  loadNextFlag(); //uruchom quiz ladujac pierwsza flage
+
+    }
+
 
 }
