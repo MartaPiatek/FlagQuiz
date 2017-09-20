@@ -2,12 +2,16 @@ package pl.martapiatek.flagquiz;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -88,7 +92,7 @@ public class MainActivityFragment extends Fragment {
         for(LinearLayout row : guessLinearLayouts){
             for(int column = 0; column < row.getChildCount(); column++){
                 Button button = (Button) row.getChildAt(column);
-                //button.setOnClickListener(guessButtonListener);
+                button.setOnClickListener(guessButtonListener);
             }
         }
 
@@ -260,5 +264,81 @@ public void updateGuessRows(SharedPreferences sharedPreferences){
 
     }
 
+    private View.OnClickListener guessButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
 
-}
+            Button guessButton = ((Button) v);
+            String guess = guessButton.getText().toString();
+            String answer = getCountryName(correctAnswer);
+            ++totalGuesses;
+
+            //jesli odpowiedz jest poprawna
+            if (guess.equals(answer)) {
+                ++correctAnswers;
+
+                //poprawna odpowiedz wyswietl zielona czcionka
+                answerTextView.setText(answer + "!");
+                answerTextView.setTextColor(getResources().getColor(R.color.correct_answer, getContext().getTheme()));
+
+                disableButtons(); // dezaktywuj wszystkie przyciski
+
+                if (correctAnswers == FLAGS_IN_QUIZ) {
+                    DialogFragment quizResults = new DialogFragment() {
+
+                        @Override
+                        public Dialog onCreateDialog(Bundle bundle) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                            builder.setMessage(getString(R.string.results, totalGuesses, (1000 / (double) totalGuesses)));
+
+                            //przycisk resetuj quiz
+                            builder.setPositiveButton(R.string.reset_quiz, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+                                    resetQuiz();
+                                }
+                            });
+                            return builder.create(); //zwroc AlertDialog
+
+                        }
+                    };
+
+                    quizResults.setCancelable(false);
+                    quizResults.show(getFragmentManager(), "quiz results");
+
+                } else {
+                    handler.postDelayed(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    animate(true);
+                                }
+                            }, 2000);
+                }
+            }
+            //odpowiedz nie jest poprawna
+            else {
+                flagImageView.startAnimation(shakeAnimation);
+
+                answerTextView.setText(R.string.incorrect_answer);
+                answerTextView.setTextColor(getResources().getColor(R.color.incorrect_answer, getContext().getTheme()));
+                guessButton.setEnabled(false);
+
+
+            }
+        }
+
+    };
+
+    private void disableButtons(){
+        for(int row = 0; row < guessRows; row++){
+            LinearLayout guessRow = guessLinearLayouts[row];
+            for(int i = 0; i < guessRow.getChildCount(); i++)
+                guessRow.getChildAt(i).setEnabled(false);
+        }
+    }
+
+    }
+
+
+
