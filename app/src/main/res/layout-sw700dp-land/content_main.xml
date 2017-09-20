@@ -8,7 +8,7 @@
     >
 
     <fragment
-        android:id="@+id/quizFragment"
+        android:id="@+id/settingsFragment"
         android:name="pl.martapiatek.flagquiz.SettingsActivityFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
